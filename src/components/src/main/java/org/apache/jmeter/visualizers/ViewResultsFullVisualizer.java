@@ -127,6 +127,10 @@ implements ActionListener, TreeSelectionListener, Clearable, ItemListener {
             JMeterUtils.getPropDefault("viewResultsTree.failure",  //$NON-NLS-1$
                     "vrt/" + ICON_SIZE + "/security-low-2.png")); //$NON-NLS-1$ $NON-NLS-2$
 
+    private static final ImageIcon imageSkip = JMeterUtils.getImage(
+            JMeterUtils.getPropDefault("viewResultsTree.failure",  //$NON-NLS-1$
+                    "vrt/" + ICON_SIZE + "/security-skip.png")); //$NON-NLS-1$ $NON-NLS-2$
+
     private JSplitPane mainSplit;
     private DefaultMutableTreeNode root;
     private DefaultTreeModel treeModel;
@@ -590,8 +594,15 @@ implements ActionListener, TreeSelectionListener, Clearable, ItemListener {
 
             // Set the status for the node
             if (failure) {
-                this.setForeground(UIManager.getColor(JMeterUIDefaults.LABEL_ERROR_FOREGROUND));
-                this.setIcon(imageFailure);
+//                --------------------------- Customized for EMS Automation by @ruthna.s---------------------------
+                if(((SampleResult) userObject).getResponseMessage().equals("Skipped Due to pre request failed")){
+                    this.setForeground(Color.orange);
+                    this.setIcon(imageSkip);
+//                ---------------------------------------------------------------------------------------------------
+                }else {
+                    this.setForeground(UIManager.getColor(JMeterUIDefaults.LABEL_ERROR_FOREGROUND));
+                    this.setIcon(imageFailure);
+                }
             } else {
                 this.setIcon(imageSuccess);
             }

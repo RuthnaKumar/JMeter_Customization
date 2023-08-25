@@ -35,6 +35,7 @@ import org.apache.jmeter.engine.event.LoopIterationListener;
 import org.apache.jmeter.gui.GuiPackage;
 import org.apache.jmeter.processor.PostProcessor;
 import org.apache.jmeter.processor.PreProcessor;
+import org.apache.jmeter.protocol.http.sampler.HTTPSampleResult;
 import org.apache.jmeter.samplers.Interruptible;
 import org.apache.jmeter.samplers.SampleEvent;
 import org.apache.jmeter.samplers.SampleListener;
@@ -565,12 +566,46 @@ public class JMeterThread implements Runnable, Interruptible {
 
         delay(pack.getTimers());
         SampleResult result = null;
+        Boolean checkSkippedRequest = Boolean.FALSE;
         if (running) {
             Sampler sampler = pack.getSampler();
-            result = doSampling(threadContext, sampler);
+//          result = doSampling(threadContext, sampler);
+//         --------------------------- Customized for EMS Automation by @ruthna.s---------------------------
+            checkSkippedRequest = sampler.getPropertyAsString("if_controller").equals("skipped");
+            if(!checkSkippedRequest) {
+                result = doSampling(threadContext, sampler);
+            }else {
+                List<SampleListener> sampleListeners = getSampleListeners(pack, transactionPack, transactionSampler);
+                AssertionResult assertionResult = new AssertionResult("Skipped Due to pre request failed");
+                assertionResult.setFailure(true);
+                String samplerComment = sampler.getComment();
+                if(samplerComment.contains("#")) {
+                    assertionResult.setFailureMessage("Skipped Due to ".concat(samplerComment.substring(samplerComment.indexOf("#") + 1)));
+                } else {
+                    assertionResult.setFailureMessage("Skipped Due to pre request failed");
+                }
+                result = new HTTPSampleResult();
+                result.setSampleLabel(sampler.getPropertyAsString("TestElement.name"));
+                result.setSuccessful(false);
+                result.setRequestHeaders("Request-Skipped");
+                result.setResponseHeaders("Response-Skipped");
+                result.setResponseData("Response-Skipped");
+                result.setResponseMessage("Skipped Due to pre request failed");
+                result.setResponseCode("412");
+                result.addAssertionResult(assertionResult);
+                result.setTimeStamp(0);
+                result.setConnectTime(0);
+                result.setLatency(0);
+                result.setThreadName(sampler.getThreadName());
+                notifyListeners(sampleListeners, result);
+            }
+//          ---------------------------------------------------------------------------------------------------
         }
         // If we got any results, then perform processing on the result
-        if (result != null) {
+//        if (result != null) {
+//       --------------------------- Customized for EMS Automation by @ruthna.s---------------------------
+        if (result != null && !checkSkippedRequest) {
+//       ---------------------------------------------------------------------------------------------------
             if (!result.isIgnore()) {
                 int nbActiveThreadsInThreadGroup = threadGroup.getNumberOfThreads();
                 int nbTotalActiveThreads = JMeterContextService.getNumberOfThreads();

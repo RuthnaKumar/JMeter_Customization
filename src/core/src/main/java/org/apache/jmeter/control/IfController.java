@@ -229,16 +229,27 @@ public class IfController extends GenericController implements Serializable, Thr
         // For subsequent calls, we are inside the IfControllerGroup,
         // so then we just pass the control to the next item inside the if control
         boolean result = true;
+        boolean skipResult = false;
         if(isEvaluateAll() || isFirst()) {
-            result = isUseExpression() ?
-                    evaluateExpression(getCondition())
-                    :
-                    evaluateCondition(getCondition());
+            result = isUseExpression() ? evaluateExpression(getCondition()):evaluateCondition(getCondition());
+            if(!result) {
+                skipResult = true;
+            }
         }
 
         if (result) {
             return super.next();
         }
+//      --------------------------- Customized for EMS Automation by @ruthna.s---------------------------
+        if(skipResult) {
+            try {
+                getCurrentElement().setProperty("if_controller","skipped");
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            return super.next();
+        }
+//      ---------------------------------------------------------------------------------------------------
         // If-test is false, need to re-initialize indexes
         try {
             initializeSubControllers();

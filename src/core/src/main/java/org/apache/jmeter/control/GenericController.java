@@ -234,6 +234,12 @@ public class GenericController extends AbstractTestElement implements Controller
             currentReturnedNull(controller);
             sampler = next();
         }
+//                --------------------------- Customized for EMS Automation by @ruthna.s---------------------------
+        Boolean checkSkippedRequest = controller.getPropertyAsString("if_controller").equals("skipped");
+        if(checkSkippedRequest) {
+            sampler.setProperty("if_controller","skipped");
+        }
+//                ---------------------------------------------------------------------------------------------------
         return sampler;
     }
 
